@@ -8,7 +8,7 @@ RUN python setup.py check && \
     python setup.py bdist_wheel
 
 FROM base
-LABEL url="https://github.com/nvllsvm/harmonize"
+LABEL url="https://github.com/Intrinsically-Sublime/harmonize"
 COPY --from=builder /src/dist /dist
 RUN apk add --no-cache flac lame opus-tools && \
     pip install --no-cache-dir /dist/*whl && \
