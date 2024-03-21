@@ -10,7 +10,7 @@ RUN python setup.py check && \
 FROM base
 LABEL url="https://github.com/Intrinsically-Sublime/harmonize"
 COPY --from=builder /src/dist /dist
-RUN apk add --no-cache flac lame opus-tools && \
+RUN apk add --no-cache flac lame opus-tools ffmpeg && \
     pip install --no-cache-dir /dist/*whl && \
     rm -r /dist
 ENTRYPOINT ["harmonize"]
