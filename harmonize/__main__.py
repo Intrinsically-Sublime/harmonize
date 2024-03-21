@@ -12,6 +12,7 @@ import tempfile
 
 import mutagen
 import mutagen.mp3
+import mutagen.mp4
 
 from . import decoders, encoders
 
@@ -47,7 +48,7 @@ class Targets:
             name = source_path.name
         else:
             split_name = source_path.name.split('.')
-            if len(split_name) > 1 and split_name[-1].lower() in ('flac', 'mp3'):
+            if len(split_name) > 1 and split_name[-1].lower() in ('flac', 'mp3', 'm4a', 'mp4'):
                 split_name[-1] = self.target_codec
                 name = '.'.join(split_name)
                 if pathlib.Path(source_path.parent, name).exists():
