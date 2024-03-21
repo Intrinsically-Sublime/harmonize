@@ -149,6 +149,9 @@ async def sync_path(source, target, encoder):
             elif source.suffix.lower() == '.mp3':
                 await transcode(decoders.mp3, encoder, source, temp_target)
                 copy_audio_metadata(source, temp_target)
+            elif source.suffix.lower() == '.mp4' or source.suffix.lower() == '.m4a':
+                await transcode(decoders.mp4source.suffix.lower() == '.mp4', encoder, source, temp_target)
+                copy_audio_metadata(source, temp_target)
             else:
                 copy(source, temp_target)
             copy_path_attr(source_lstat, temp_target)
