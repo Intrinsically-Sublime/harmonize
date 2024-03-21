@@ -11,7 +11,7 @@ setuptools.setup(
     author_email='ar@nullsum.net',
     description='Create and synchronize transcoded copies of audio folders',
     long_description=REPO.joinpath('README.rst').read_text(),
-    url='https://github.com/nvllsvm/harmonize',
+    url='https://github.com/Intrinsically-Sublime/harmonize',
     install_requires=['mutagen>=1.40.0'],
     license='Apache 2.0',
     packages=['harmonize'],
