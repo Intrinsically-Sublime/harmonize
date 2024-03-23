@@ -1,0 +1,26 @@
+services:
+  harmonize:
+    container_name: harmonize
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    user: 1000:1000         # Should match your user
+    environment:
+      PUID: 1000            # Should match your user
+      PGID: 1000            # Should match your user group
+      NUM_PROCESSES: 4      # default=processor count
+      OUT_CODEC: "opus"     # default=opus    # Ouput codec to use. opus or mp3
+      HARDLINK: "False"     # default=False   # Use hardlinks instead of copying files that are not being converted
+      SOFTLINK: "False"     # default=False   # Use symbolic links instead of copying files that are not being converted. Overwritten by hardlinks
+      CONV_FLAC: "True"     # default=True    # Whether to convert flac's to the output codec
+      CONV_M4A: "True"      # default=True    # Whether to convert m4a's to the output codec
+      CONV_MP3: "False"     # default=False   # Whether to convert mp3's to the output codec (only useful for converting to opus)
+      CLEANUP: "False"      # default=False   # Delete files not found on the source. Added so you can sync multiple sources to one folder
+      TZ: America/los_angeles
+    network_mode: none
+    restart: no
+    volumes:                # To use Hardlinks all files must be on the same mount point, Bind locations will not work.
+      - /mnt:/mnt           # mount_location:virtual_location # The virtual location must match the mount location
+    command:
+      - "/mnt/Music"        # absolute path to source folder, must be inside the mapped volume above
+      - "/mnt/Music_opus"   # absolute path to target folder, must be inside the mapped volume above
