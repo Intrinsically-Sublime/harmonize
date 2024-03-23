@@ -48,7 +48,7 @@ class Targets:
             name = source_path.name
         else:
             split_name = source_path.name.split('.')
-            if len(split_name) > 1 and split_name[-1].lower() in ('flac', 'mp3', 'm4a', 'mp4'):
+            if len(split_name) > 1 and split_name[-1].lower() in ('flac', 'mp3', 'm4a'):
                 split_name[-1] = self.target_codec
                 name = '.'.join(split_name)
                 if pathlib.Path(source_path.parent, name).exists():
@@ -143,17 +143,21 @@ async def sync_path(source, target, encoder):
 
         target.parent.mkdir(parents=True, exist_ok=True)
         with TempPath(dir=target.parent, suffix='.temp') as temp_target:
-            if source.suffix.lower() == '.flac':
+            if source.suffix.lower() == '.flac' and CONV_FLAC == 'True':
                 await transcode(decoders.flac, encoder, source, temp_target)
                 copy_audio_metadata(source, temp_target)
-            elif source.suffix.lower() == '.mp3':
+            elif source.suffix.lower() == '.mp3' and CONV_MP3 == 'True':
                 await transcode(decoders.mp3, encoder, source, temp_target)
                 copy_audio_metadata(source, temp_target)
-            elif source.suffix.lower() == '.mp4' or source.suffix.lower() == '.m4a':
+            elif source.suffix.lower() == '.m4a' and CONV_M4A == 'True':
                 await transcode(decoders.mp4, encoder, source, temp_target)
                 copy_audio_metadata(source, temp_target)
             else:
-                copy(source, temp_target)
+                if HARDLINK == 'True' or SOFTLINK == 'True':
+                    copy(source, target)
+                    return
+                else:
+                    copy(source, temp_target)
             copy_path_attr(source_lstat, temp_target)
             temp_target.rename(target)
 
@@ -183,9 +187,20 @@ def copy(source, target):
         LOGGER.info('Creating %s', source)
         target.mkdir(exist_ok=True, parents=True)
     else:
-        LOGGER.info('Copying %s', source)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(source, target)
+        if HARDLINK == 'True':
+            LOGGER.info('Hardlinking %s', source)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            _delete_if_exists(target)
+            os.link(source, target)
+        elif SOFTLINK == 'True':
+            LOGGER.info('Softlinking %s', source)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            _delete_if_exists(target)
+            os.symlink(source, target)
+        else:
+            LOGGER.info('Copying %s', source)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(source, target)
 
 
 @contextlib.contextmanager
@@ -223,7 +238,7 @@ def copy_audio_metadata(source, target):
 
 
 async def transcode(decoder, encoder, source, target):
-    """Transcode a FLAC file to MP3
+    """Transcode an audio file
 
     :param pathlib.Path source:
     :param pathlib.Path target:
@@ -296,7 +311,8 @@ async def async_run(args, encoder_options):
     async for result in executor.as_completed():
         result.result()
 
-    targets.sanitize()
+    if CLEANUP == 'True':
+        targets.sanitize()    
 
     LOGGER.info('Processing complete')
 
@@ -304,8 +320,8 @@ async def async_run(args, encoder_options):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--codec', default='mp3', choices=_CODEC_ENCODERS,
-        help=('codec to output as. encoder configuration may be specified as '
+        '--codec', default=os.getenv('OUT_CODEC', 'opus'), choices=_CODEC_ENCODERS,
+        help=('codec to use for output. encoder configuration may be specified as '
               'additional arguments to harmonize'))
     parser.add_argument(
         '-n', dest='num_processes',
@@ -316,8 +332,25 @@ def main():
         '-q', '--quiet', action='store_true',
         help='suppress informational output')
     parser.add_argument(
-        '--version', action='version', version=VERSION,
-    )
+        '--hardlink', default=os.getenv('HARDLINK', 'False'), choices=('True', 'False'),
+        help='use hardlinks instead of copying the extra files')
+    parser.add_argument(
+        '--softlink', default=os.getenv('SOFTLINK', 'False'), choices=('True', 'False'),
+        help='use symbolic links instead of copying the extra files')
+    parser.add_argument(
+        '--cleanup', default=os.getenv('CLEANUP', 'False'), choices=('True', 'False'),
+        help='remove files not found in the source')
+    parser.add_argument(
+        '--convflac', default=os.getenv('CONV_FLAC', 'True'), choices=('True', 'False'),
+        help='convert flac files to output codec')
+    parser.add_argument(
+        '--convm4a', default=os.getenv('CONV_M4A', 'True'), choices=('True', 'False'),
+        help='convert m4a files to output codec')
+    parser.add_argument(
+        '--convmp3', default=os.getenv('CONV_MP3', 'False'), choices=('True', 'False'),
+        help='convert mp3 files to output codec')
+    parser.add_argument(
+        '--version', action='version', version=VERSION )
     parser.add_argument(
         '--exclude', metavar='PATTERN', action='append',
         help='ignore files matching this pattern')
@@ -327,6 +360,21 @@ def main():
         'target', type=pathlib.Path, help='Target directory')
 
     args, encoder_options = parser.parse_known_args()
+    
+    global OUT_CODEC
+    OUT_CODEC = args.codec
+    global HARDLINK
+    HARDLINK = args.hardlink
+    global SOFTLINK
+    SOFTLINK = args.softlink
+    global CLEANUP
+    CLEANUP = args.cleanup
+    global CONV_FLAC
+    CONV_FLAC = args.convflac
+    global CONV_M4A
+    CONV_M4A = args.convm4a
+    global CONV_MP3
+    CONV_MP3 = args.convmp3
 
     logging.basicConfig(
         format='%(message)s',
