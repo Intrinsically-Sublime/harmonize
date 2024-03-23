@@ -1,6 +1,24 @@
 Changelog
 =========
 
+1.1.0 (2024-03-23)  Intrinsically-Sublime First Release
+------------------
+* Add hardlink option (instead of copying the extra files)
+* Add symbolic link option (instead of copying the extra files)
+* Add m4a (mp4) as input source for transcoding
+* Add mp3 as input source for transcoding (from nvllsvm's branch)
+* Make transcoding flac optional
+* Make transcoding m4a optional
+* Make transcoding mp3 optional
+* Make sanitizing optional (allows syncing multiple sources to one target)
+* Make variables available as Docker Environment Variables
+* Add docker compose example with all variables
+* Remove "raise asyncio.subprocess.CalledProcessError" since asyncio.subprocess doesn't have CalledProcessError
+* Add primitive error reporting in place of above
+
+NVLLSVM Versions
+================
+
 1.0.2 (2020-07-02)
 ------------------
 * Read source mtime only once as source may change during transcode
@@ -56,7 +74,7 @@ Changelog
 0.1.4 (2018-05-14)
 ------------------
 * Add num processes flag
-* Fix paralleization for small folders
+* Fix parallelization for small folders
 
 0.1.3 (2018-05-14)
 ------------------
