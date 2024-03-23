@@ -25,21 +25,17 @@ async def flac(path):
 
     yield read_pipe
     await proc.wait()
-    # Decode errors may are non-fatal, but may indicate a problem
+    # Decode errors, many are non-fatal, but may indicate a problem
     stderr = await proc.stderr.read()
     if proc.returncode:
-        raise asyncio.subprocess.CalledProcessError(
-            proc.returncode,
-            proc.args,
-            stderr=stderr
-        )
+        LOGGER.info('ERROR DECODING FLAC %s', proc.returncode)
     if stderr:
-        LOGGER.warning('Decode "%s" "%s"', path, stderr)
+        LOGGER.warning('ERROR DECODING FLAC "%s"', stderr)
 
 
 @contextlib.asynccontextmanager
 async def mp3(path):
-    """Decode a MP3 file
+    """Decode an MP3 file
 
     :param pathlib.Path path: The MP3 file path
     """
@@ -57,18 +53,14 @@ async def mp3(path):
     # Decode errors may are non-fatal, but may indicate a problem
     stderr = await proc.stderr.read()
     if proc.returncode:
-        raise asyncio.subprocess.CalledProcessError(
-            proc.returncode,
-            proc.args,
-            stderr=stderr
-        )
+        LOGGER.info('ERROR DECODING MP3 %s', proc.returncode)
 
 
 @contextlib.asynccontextmanager
 async def mp4(path):
-    """Decode a MP4 file
+    """Decode an M4A file
 
-    :param pathlib.Path path: The MP4 file path
+    :param pathlib.Path path: The M4A file path
     """
     read_pipe, write_pipe = os.pipe()
 
@@ -84,8 +76,6 @@ async def mp4(path):
     # Decode errors may are non-fatal, but may indicate a problem
     stderr = await proc.stderr.read()
     if proc.returncode:
-        raise asyncio.subprocess.CalledProcessError(
-            proc.returncode,
-            proc.args,
-            stderr=stderr
-        )
+        LOGGER.info('ERROR DECODING M4A %s', proc.returncode)
+
+
